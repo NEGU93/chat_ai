@@ -6,6 +6,9 @@ st.markdown("# CHAT AI")
 
 # Streamlit UI
 model = st.sidebar.selectbox("Select Model", get_available_models())
+
+st.markdown(f"Using Model: **{model}**")
+
 prompt = st.text_area("Enter your prompt here", height=200)
 
 if st.button("Generate Response") and prompt:

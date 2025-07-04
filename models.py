@@ -8,27 +8,43 @@ from anthropic import Anthropic
 
 def ensure_llama_model(model_name="llama3.2", auto_pull=False) -> bool:
     try:
-        # Check if ollama CLI is installed
-        subprocess.run(["ollama", "version"], capture_output=True, check=True)
+        # Check available models
+        result = subprocess.run(
+            ["ollama", "list"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
 
-        # Check if model is already available
-        result = subprocess.run(["ollama", "list"], capture_output=True, text=True, check=True)
-        available_models = [line.split()[0].lower() for line in result.stdout.splitlines()[1:]]
+        if result.returncode != 0:
+            print("[ollama list] Error:", result.stderr.strip())
+            return False
+
+        available_models = [
+            line.split()[0].split(":")[0].lower()
+            for line in result.stdout.strip().splitlines()[1:]  # skip header
+            if line.strip()
+        ]
 
         if model_name.lower() in available_models:
             return True
 
         if auto_pull:
-            print(f"Pulling model '{model_name}'...")
-            subprocess.run(["ollama", "pull", model_name], check=True)
-            return True
+            print(f"Model '{model_name}' not found. Attempting to pull...")
+            pull_result = subprocess.run(["ollama", "pull", model_name], check=True)
+            return pull_result.returncode == 0
+
+        return False
 
     except FileNotFoundError:
-        print("Ollama is not installed.")
+        print("Ollama is not installed or not in PATH.")
     except subprocess.CalledProcessError as e:
-        print(f"Error interacting with Ollama: {e}")
+        print("Subprocess error:", e)
+    except Exception as e:
+        print("Unknown error:", e)
 
     return False
+
 
 class OpenAIWrapper:
     def __init__(self, **kwargs: Any):
@@ -140,6 +156,7 @@ def get_available_models() -> List[str]:
     anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
     google_api_key = os.getenv('GOOGLE_API_KEY')
 
+    models = []
     if ensure_llama_model("llama3.2", auto_pull=False):
         models.append("LLAMA")
     if openai_api_key:
