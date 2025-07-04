@@ -3,6 +3,8 @@ from models import get_available_models, get_model
 
 st.markdown("# CHAT AI")
 
+if "prompt" not in st.session_state:
+    st.session_state.prompt = ""
 
 # Streamlit UI
 model_name = st.sidebar.selectbox("Select Model", get_available_models())
@@ -17,8 +19,14 @@ with chat_placeholder:
     for message in st.session_state.model.messages[1:]: # Skip system message
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-# Model prompts
-prompt = st.text_area("Enter your prompt here", height=200)
+
+def submit_prompt():
+    st.session_state.prompt = st.session_state.prompt_widget
+    st.session_state.prompt_widget  = ""
+
+st.text_area("Enter your prompt here", height=200, key="prompt_widget", on_change=submit_prompt)
+prompt = st.session_state.prompt
+
 if prompt.strip():
     with chat_placeholder:
         with st.chat_message("user"):

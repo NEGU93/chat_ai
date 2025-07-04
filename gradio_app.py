@@ -36,7 +36,7 @@ with gr.Blocks(title="Chat AI") as demo:
     with gr.Row():
         model_dropdown = gr.Dropdown(choices=model_list, label="Select Model", value=model_list[0])
 
-    chatbot = gr.Chatbot(label="Chat")
+    chatbot = gr.Chatbot(label="Chat", type="messages")
     prompt_box = gr.Textbox(lines=4, placeholder="Enter your prompt here...", label="Prompt")
 
     send_button = gr.Button("Send")
