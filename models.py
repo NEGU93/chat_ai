@@ -46,13 +46,18 @@ def ensure_llama_model(model_name="llama3.2", auto_pull=False) -> bool:
     return False
 
 
-class OpenAIWrapper:
-    def __init__(self, **kwargs: Any):
-        """Initialize OpenAI-compatible client."""
-        
-        self.client = openai.OpenAI(**kwargs)
+class AIWrapper:
 
-    def chat(self, model_name: str, prompt: str) -> Generator:
+    def get_stream(self, model_name: str, prompt: str) -> Generator:
+        pass
+
+    def chat(
+            self,
+            model_name: str,
+            prompt: str,
+            previous_prompts: List[str] = None,
+            assistant_responses: List[str] = None
+        ) -> Generator:
         """
         Generate a streaming response from an OpenAI-compatible model.
 
@@ -63,20 +68,55 @@ class OpenAIWrapper:
         Returns:
             Generator: A stream of completion chunks.
         """
-        return self.client.chat.completions.create(
+        if previous_prompts is None:
+            previous_prompts = []
+        if assistant_responses is None:
+            assistant_responses = []
+        stream = self.get_stream(
+            model_name=model_name,
+            prompt=prompt,
+            previous_prompts=previous_prompts,
+            assistant_responses=assistant_responses
+        )
+        return stream
+
+
+class OpenAIWrapper(AIWrapper):
+    def __init__(self, **kwargs: Any):
+        """Initialize OpenAI-compatible client."""
+
+        self.client = openai.OpenAI(**kwargs)
+
+    def get_stream(self, model_name: str, prompt: str, previous_prompts: List[str], assistant_responses: List[str]) -> Generator:
+        """
+        Generate a streaming response from an OpenAI-compatible model.
+
+        Args:
+            model_name (str): The model name to use.
+            prompt (str): The prompt to send.
+
+        Returns:
+            Generator: A stream of completion chunks.
+        """
+        messages = []
+        for prev_prompt, assistant_response in zip(previous_prompts, assistant_responses):
+            messages.append({"role": "user", "content": prev_prompt})
+            messages.append({"role": "assistant", "content": assistant_response})
+        messages.append({"role": "user", "content": prompt})
+        stream = self.client.chat.completions.create(
             model=model_name,
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
             stream=True
         )
+        return stream
 
 
-class ClaudeWrapper:
+class ClaudeWrapper(AIWrapper):
     def __init__(self, **kwargs: Any):
         """Initialize Claude (Anthropic) client."""
-        
         self.client = Anthropic(**kwargs)
 
-    def chat(self, model_name: str, prompt: str) -> Generator:
+    def get_stream(self, model_name: str, prompt: str) -> Generator:
         """
         Generate a streaming response from Claude.
 
@@ -124,7 +164,7 @@ MODEL_CONFIG: Dict[str, Dict[str, Any]] = {
 }
 
 
-def get_response(model_key: str, prompt: str) -> Generator:
+def get_response(model_key: str, prompt: str, previous_prompts: List[str], assistant_responses: List[str]) -> Generator:
     """
     Get streaming response from the selected model.
 
@@ -141,7 +181,7 @@ def get_response(model_key: str, prompt: str) -> Generator:
     class_constructor_params = config.get("class_constructor_params", {})
 
     instance = globals()[class_name](**class_constructor_params)
-    return instance.chat(model_name, prompt)
+    return instance.chat(model_name, prompt, previous_prompts, assistant_responses)
 
 
 def get_available_models() -> List[str]:
