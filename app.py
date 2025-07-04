@@ -14,18 +14,43 @@ st.markdown("# CHAT AI")
 model = st.sidebar.selectbox("Select Model", get_available_models())
 
 # Chat
+# Inject CSS styles for chat bubbles alignment
+st.markdown(
+    """
+    <style>
+    .user-message {
+        text-align: right;
+        background-color: #DCF8C6;
+        padding: 8px 12px;
+        border-radius: 15px;
+        margin: 5px 0;
+        max-width: 70%;
+        margin-left: auto;
+    }
+    .assistant-message {
+        text-align: left;
+        background-color: #F1F0F0;
+        padding: 8px 12px;
+        border-radius: 15px;
+        margin: 5px 0;
+        max-width: 70%;
+        margin-right: auto;
+    }
+    </style>
+    """, unsafe_allow_html=True
+)
 chat_placeholder = st.container()
 with chat_placeholder:
     for user_msg, assistant_msg in zip(st.session_state.previous_prompts, st.session_state.assistant_responses):
-        st.markdown(f"**You:** {user_msg}")
-        st.markdown(f"**AI:** {assistant_msg}")
-        st.markdown("---")
-        # Streamlit placeholder to update the latest message while streaming
-        message_placeholder = st.empty()
+        st.markdown(f'<div class="user-message">{user_msg}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="assistant-message">{assistant_msg}</div>', unsafe_allow_html=True)
 
 # Model prompts
 prompt = st.text_area("Enter your prompt here", height=200)
 if st.button("Send") and prompt.strip():
+    st.markdown(f'<div class="user-message">{prompt}</div>', unsafe_allow_html=True)
+    # Streamlit placeholder to update the latest message while streaming
+    message_placeholder = st.empty()
     with st.spinner("Thinking..."):
         # Start streaming response
         full_response = ""
