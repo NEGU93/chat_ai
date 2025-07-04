@@ -48,46 +48,24 @@ def ensure_llama_model(model_name="llama3.2", auto_pull=False) -> bool:
 
 class AIWrapper:
 
-    def get_stream(self, model_name: str, prompt: str) -> Generator:
+    def __init__(self, model_name: str, system_role = None):
+        """Initialize the AI wrapper."""
+        if system_role is None:
+            system_role = "You are a helpful assistant that responds in markdown"
+        self.messages = [{"role": "system", "content": system_role}]
+        self.model_name = model_name
+
+    def chat(self, prompt: str) -> Generator:
         pass
-
-    def chat(
-            self,
-            model_name: str,
-            prompt: str,
-            previous_prompts: List[str] = None,
-            assistant_responses: List[str] = None
-        ) -> Generator:
-        """
-        Generate a streaming response from an OpenAI-compatible model.
-
-        Args:
-            model_name (str): The model name to use.
-            prompt (str): The prompt to send.
-
-        Returns:
-            Generator: A stream of completion chunks.
-        """
-        if previous_prompts is None:
-            previous_prompts = []
-        if assistant_responses is None:
-            assistant_responses = []
-        stream = self.get_stream(
-            model_name=model_name,
-            prompt=prompt,
-            previous_prompts=previous_prompts,
-            assistant_responses=assistant_responses
-        )
-        return stream
 
 
 class OpenAIWrapper(AIWrapper):
-    def __init__(self, **kwargs: Any):
+    def __init__(self, model_name: str, system_role = None, **kwargs: Any):
         """Initialize OpenAI-compatible client."""
-
+        super().__init__(model_name=model_name, system_role=system_role)
         self.client = openai.OpenAI(**kwargs)
 
-    def get_stream(self, model_name: str, prompt: str, previous_prompts: List[str], assistant_responses: List[str]) -> Generator:
+    def chat(self, prompt: str) -> Generator:
         """
         Generate a streaming response from an OpenAI-compatible model.
 
@@ -98,25 +76,26 @@ class OpenAIWrapper(AIWrapper):
         Returns:
             Generator: A stream of completion chunks.
         """
-        messages = []
-        for prev_prompt, assistant_response in zip(previous_prompts, assistant_responses):
-            messages.append({"role": "user", "content": prev_prompt})
-            messages.append({"role": "assistant", "content": assistant_response})
-        messages.append({"role": "user", "content": prompt})
+        self.messages.append({"role": "user", "content": prompt})
         stream = self.client.chat.completions.create(
-            model=model_name,
-            messages=messages,
+            model=self.model_name,
+            messages=self.messages,
             stream=True
         )
-        return stream
+        result = ""
+        for chunk in stream:
+            result += chunk.choices[0].delta.content or ""
+            yield result
+        self.messages.append({"role": "assistant", "content": result})
 
 
 class ClaudeWrapper(AIWrapper):
-    def __init__(self, **kwargs: Any):
+    def __init__(self, model_name: str, system_role = None, **kwargs: Any):
         """Initialize Claude (Anthropic) client."""
+        super().__init__(model_name=model_name, system_role=system_role)
         self.client = Anthropic(**kwargs)
 
-    def get_stream(self, model_name: str, prompt: str) -> Generator:
+    def chat(self, prompt: str) -> Generator:
         """
         Generate a streaming response from Claude.
 
@@ -127,44 +106,49 @@ class ClaudeWrapper(AIWrapper):
         Returns:
             Generator: A stream of Claude response content.
         """
-        return self.client.messages.create(
-            model=model_name,
-            messages=[{"role": "user", "content": prompt}],
+        self.messages.append({"role": "user", "content": prompt})
+        result = self.client.messages.stream(
+            model=self.model_name,
+            system=self.messages[0]["content"],
+            messages=self.messages[1:],
             max_tokens=1024,
-            stream=True
         )
+        response = ""
+        with result as stream:
+            for text in stream.text_stream:
+                response += text or ""
+                yield response
+        self.messages.append({"role": "assistant", "content": response})
     
 # Model configuration for different providers
 MODEL_CONFIG: Dict[str, Dict[str, Any]] = {
     "LLAMA": {
-        "model_name": "llama3.2",
         "class_name": "OpenAIWrapper",
         "class_constructor_params": {
             "base_url": 'http://localhost:11434/v1',
-            "api_key": 'ollama'
+            "api_key": 'ollama',
+            "model_name": "llama3.2",
         }
     },
     "ChatGPT": {
-        "model_name": "gpt-4o-mini",
         "class_name": "OpenAIWrapper",
-        "class_constructor_params": {}
+        "class_constructor_params": {"model_name": "gpt-4o-mini",}
     },
     "Claude": {
-        "model_name": "claude-3-7-sonnet-latest",
         "class_name": "ClaudeWrapper",
-        "class_constructor_params": {}
+        "class_constructor_params": {"model_name": "claude-3-7-sonnet-latest"}
     },
     "Gemini": {
-        "model_name": "gemini-2.0-flash",
         "class_name": "OpenAIWrapper",
         "class_constructor_params": {
+            "model_name": "gemini-2.0-flash",
             "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/"
         }
     },
 }
 
 
-def get_response(model_key: str, prompt: str, previous_prompts: List[str], assistant_responses: List[str]) -> Generator:
+def get_model(model_key: str) -> AIWrapper:
     """
     Get streaming response from the selected model.
 
@@ -177,11 +161,9 @@ def get_response(model_key: str, prompt: str, previous_prompts: List[str], assis
     """
     config = MODEL_CONFIG[model_key]
     class_name = config["class_name"]
-    model_name = config["model_name"]
     class_constructor_params = config.get("class_constructor_params", {})
 
-    instance = globals()[class_name](**class_constructor_params)
-    return instance.chat(model_name, prompt, previous_prompts, assistant_responses)
+    return globals()[class_name](**class_constructor_params)
 
 
 def get_available_models() -> List[str]:
