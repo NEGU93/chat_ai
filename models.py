@@ -119,7 +119,8 @@ class ClaudeWrapper(AIWrapper):
                 response += text or ""
                 yield response
         self.messages.append({"role": "assistant", "content": response})
-    
+
+
 # Model configuration for different providers
 MODEL_CONFIG: Dict[str, Dict[str, Any]] = {
     "LLAMA": {
