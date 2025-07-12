@@ -6,7 +6,7 @@ import openai
 from anthropic import Anthropic
 
 
-def ensure_llama_model(model_name="llama3.2", auto_pull=False) -> bool:
+def ensure_ollama_model(model_name="llama3.2", auto_pull=False) -> bool:
     try:
         # Check available models
         result = subprocess.run(
@@ -31,7 +31,9 @@ def ensure_llama_model(model_name="llama3.2", auto_pull=False) -> bool:
 
         if auto_pull:
             print(f"Model '{model_name}' not found. Attempting to pull...")
-            pull_result = subprocess.run(["ollama", "pull", model_name], check=True)
+            pull_result = subprocess.run(
+                ["ollama", "pull", model_name], check=True
+            )
             return pull_result.returncode == 0
 
         return False
@@ -47,11 +49,12 @@ def ensure_llama_model(model_name="llama3.2", auto_pull=False) -> bool:
 
 
 class AIWrapper:
-
-    def __init__(self, model_name: str, system_role = None):
+    def __init__(self, model_name: str, system_role=None):
         """Initialize the AI wrapper."""
         if system_role is None:
-            system_role = "You are a helpful assistant that responds in markdown"
+            system_role = (
+                "You are a helpful assistant that responds in markdown"
+            )
         self.messages = [{"role": "system", "content": system_role}]
         self.model_name = model_name
 
@@ -60,7 +63,7 @@ class AIWrapper:
 
 
 class OpenAIWrapper(AIWrapper):
-    def __init__(self, model_name: str, system_role = None, **kwargs: Any):
+    def __init__(self, model_name: str, system_role=None, **kwargs: Any):
         """Initialize OpenAI-compatible client."""
         super().__init__(model_name=model_name, system_role=system_role)
         self.client = openai.OpenAI(**kwargs)
@@ -78,9 +81,7 @@ class OpenAIWrapper(AIWrapper):
         """
         self.messages.append({"role": "user", "content": prompt})
         stream = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=self.messages,
-            stream=True
+            model=self.model_name, messages=self.messages, stream=True
         )
         result = ""
         for chunk in stream:
@@ -90,7 +91,7 @@ class OpenAIWrapper(AIWrapper):
 
 
 class ClaudeWrapper(AIWrapper):
-    def __init__(self, model_name: str, system_role = None, **kwargs: Any):
+    def __init__(self, model_name: str, system_role=None, **kwargs: Any):
         """Initialize Claude (Anthropic) client."""
         super().__init__(model_name=model_name, system_role=system_role)
         self.client = Anthropic(**kwargs)
@@ -121,30 +122,88 @@ class ClaudeWrapper(AIWrapper):
         self.messages.append({"role": "assistant", "content": response})
 
 
+class HuggingFaceWrapper(AIWrapper):
+    def __init__(self, model_name: str, system_role=None, **kwargs: Any):
+        """Initialize Hugging Face client."""
+        super().__init__(model_name=model_name, system_role=system_role)
+        import torch
+        from transformers import (
+            AutoTokenizer,
+            AutoModelForCausalLM,
+            BitsAndBytesConfig,
+        )
+
+        quant_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_quant_type="nf4",
+        )
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self.tokenizer.pad_token = self.tokenizer.eos_token
+        # self.streamer = TextStreamer(self.tokenizer)
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name, device_map="auto", quantization_config=quant_config
+        )
+
+    def chat(self, prompt: str) -> Generator:
+        """
+        Generate a response from a Hugging Face model.
+
+        Args:
+            prompt (str): The input prompt.
+
+        Returns:
+            Generator: A stream of response content.
+        """
+        self.messages.append({"role": "user", "content": prompt})
+        inputs = self.tokenizer.apply_chat_template(
+            self.messages, return_tensors="pt"
+        ).to("cuda")
+        outputs = self.model.generate(
+            inputs,
+            max_new_tokens=2000,  # streamer=self.streamer
+        )
+
+        new_tokens = outputs[0][inputs.shape[1] :]
+        response = self.tokenizer.decode(new_tokens, skip_special_tokens=True)
+        response = response.replace("assistant", "")
+        self.messages.append({"role": "assistant", "content": response})
+        yield response
+
+
 # Model configuration for different providers
 MODEL_CONFIG: Dict[str, Dict[str, Any]] = {
-    "LLAMA": {
+    "OLLAMA": {
         "class_name": "OpenAIWrapper",
         "class_constructor_params": {
-            "base_url": 'http://localhost:11434/v1',
-            "api_key": 'ollama',
+            "base_url": "http://localhost:11434/v1",
+            "api_key": "ollama",
             "model_name": "llama3.2",
-        }
+        },
     },
-    "ChatGPT": {
+    "OpenAI": {
         "class_name": "OpenAIWrapper",
-        "class_constructor_params": {"model_name": "gpt-4o-mini",}
+        "class_constructor_params": {
+            "model_name": "gpt-4o-mini",
+        },
     },
     "Claude": {
         "class_name": "ClaudeWrapper",
-        "class_constructor_params": {"model_name": "claude-3-7-sonnet-latest"}
+        "class_constructor_params": {"model_name": "claude-3-7-sonnet-latest"},
     },
     "Gemini": {
         "class_name": "OpenAIWrapper",
         "class_constructor_params": {
             "model_name": "gemini-2.0-flash",
-            "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/"
-        }
+            "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+        },
+    },
+    "Hugging Face": {
+        "class_name": "HuggingFaceWrapper",
+        "class_constructor_params": {
+            "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct"
+        },
     },
 }
 
@@ -160,6 +219,8 @@ def get_model(model_key: str) -> AIWrapper:
     Returns:
         Generator: A generator yielding response chunks.
     """
+    if model_key == "Hugging Face":
+        HuggingFaceWrapper.clear_cache()
     config = MODEL_CONFIG[model_key]
     class_name = config["class_name"]
     class_constructor_params = config.get("class_constructor_params", {})
@@ -175,18 +236,23 @@ def get_available_models() -> List[str]:
         List[str]: List of available model keys.
     """
     load_dotenv(override=True)
-    openai_api_key = os.getenv('OPENAI_API_KEY')
-    anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
-    google_api_key = os.getenv('GOOGLE_API_KEY')
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+    anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+    google_api_key = os.getenv("GOOGLE_API_KEY")
+    hf_token = os.getenv("HF_TOKEN")
 
     models = []
-    if ensure_llama_model("llama3.2", auto_pull=False):
-        models.append("LLAMA")
+    # if ensure_ollama_model("llama3.2", auto_pull=False):
+    models.append("OLLAMA")
     if openai_api_key:
-        models.append("ChatGPT")
+        models.append("OpenAI")
     if anthropic_api_key:
         models.append("Claude")
+    if hf_token:
+        models.append("Hugging Face")
     if google_api_key:
         models.append("Gemini")
-        MODEL_CONFIG["Gemini"]["class_constructor_params"]["api_key"] = google_api_key
+        MODEL_CONFIG["Gemini"]["class_constructor_params"]["api_key"] = (
+            google_api_key
+        )
     return models
