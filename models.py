@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Generator
 from collections import defaultdict
 from dotenv import load_dotenv
 import openai
-from anthropic import Anthropic
 
 
 def ensure_ollama_model(model_name="llama3.2", auto_pull=False) -> bool:
@@ -106,6 +105,8 @@ class OllamaProvider(OpenAIProvider):
 class AnthropicProvider(AIWrapper):
     def __init__(self, model_name: str, system_role=None, **kwargs: Any):
         """Initialize Anthropic (Claude) client."""
+        from anthropic import Anthropic
+
         super().__init__(model_name=model_name, system_role=system_role)
         self.client = Anthropic(**kwargs)
 
