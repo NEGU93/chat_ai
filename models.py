@@ -256,3 +256,19 @@ def get_available_models() -> List[str]:
             google_api_key
         )
     return models
+
+
+def audio2text(audio_input: Any) -> str:
+    """
+    Convert audio input to text using a speech-to-text service.
+
+    Args:
+        audio_input (Any): The audio input to convert.
+
+    Returns:
+        str: The transcribed text.
+    """
+    transcription = openai.OpenAI().audio.transcriptions.create(
+        model="whisper-1", file=audio_input, response_format="text"
+    )
+    return transcription
