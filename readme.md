@@ -13,24 +13,17 @@
 
 ![UI](static/Screenshot.png)
 
-### 🔥 Key Features
+### 🔥 Key Features & Technical Highlights
 
-- **🔄 Multi-Provider Support**: Seamlessly switch between OpenAI GPT, Claude, Gemini, LLAMA, and other models
+- **🔄 Multi-Provider Support**: Seamlessly switch between OpenAI GPT, Claude, Gemini, LLAMA, and other models with unified interface abstraction
 - **🎙️ Voice Integration**: Speech-to-text capabilities with real-time transcription
-- **🏠 Local & Cloud**: Support for both cloud APIs and local inference (OLLAMA, Hugging Face)
+- **🏠 Local & Cloud**: Support for both cloud APIs and local inference (OLLAMA, Hugging Face downloading the torch model)
 - **🎨 Modern UI**: Clean, responsive interface built with Streamlit
-- **🔧 Extensible Architecture**: Modular design allowing easy addition of new AI providers
-- **⚡ Performance Optimized**: Efficient model loading and caching mechanisms
-
-### 🧠 Technical Highlights
-
-- **Provider Abstraction Layer**: Unified interface for different AI models regardless of their underlying implementation
-- **Async Processing**: Non-blocking operations for better user experience
-- **Configuration Management**: Secure environment-based configuration
-- **Scalable Design**: Easy to extend with new AI providers
+- **⚡ Performance Optimized**: Efficient model loading, caching, and async processing for non-blocking operations
+- **🔧 Extensible Architecture**: Modular design with secure environment-based configuration for easy provider addition
 
 > [!TIP]
-> Hugging Face is not using the pipeline method, but actually downloading the Torch model, quantizing it (assume you don't normally have a great GPU) and run it in a low level manner, using tokenizer encode/decode.
+> Hugging Face implementation downloads and quantizes Torch models directly (optimized for consumer GPUs), using low-level tokenizer encode/decode rather than pipeline methods.
 
 ## 🚀 Supported AI Providers
 
@@ -66,10 +59,10 @@ Setup whatever keys you want
 - For Google, visit https://ai.google.dev/gemini-api
 - For HuggingFace, visit https://huggingface.co
 
-> [!WARNING]
+> [!NOTE]
 > OpenAI key is required for Speech-to-text capabilities
 
-> [!WARNING]
+> [!NOTE]
 > For the default HuggingFace model, Meta requires you to sign their terms of service. Visit their model instructions page in Hugging Face: https://huggingface.co/meta-llama/Meta-Llama-3.1-8B. It might take some time to validate.
 
 ### Environment Configuration
@@ -104,39 +97,6 @@ streamlit run streamlit_app.py
 
 Navigate to `http://localhost:8501` and start chatting with your preferred AI model!
 
-## 🎤 Voice Features
-
-The integrated voice system allows for:
-- **Real-time transcription** of spoken input
-- **Hands-free interaction** with AI models
-- **Multi-language support** (via OpenAI Whisper)
-
-*Note: Voice features require OpenAI API key*
-
-## 💡 Use Cases
-
-- **AI Research & Development**: Compare different models' responses
-- **Education**: Learn about various LLM capabilities
-- **Prototyping**: Quickly test AI-powered features
-- **Cost Optimization**: Mix cloud and local models based on needs
-- **Privacy**: Use local models for sensitive conversations
-
-## 🔧 Technical Implementation
-
-### Core Components
-
-- **Model Abstraction**: `models.py` implements a unified interface pattern
-- **UI Layer**: `streamlit_app.py` provides responsive web interface
-- **Configuration**: Environment-based secure API key management
-- **Error Handling**: Comprehensive exception handling across all providers
-
-### Performance Optimizations
-
-- Lazy loading of AI models
-- Efficient memory management
-- Caching for improved response times
-- Async operations where applicable
-
 ## 📊 Why This Project Matters
 
 This application showcases several important technical skills:
@@ -147,13 +107,12 @@ This application showcases several important technical skills:
 - **API Management**: Secure handling of multiple API integrations
 - **Performance Engineering**: Optimization for real-time AI interactions
 
-
 ## 🏗️ Architecture
 
 The application follows a clean architecture pattern with clear separation of concerns:
 
 ```
-├── models.py          # Core AI provider abstractions and unified interface
+├── models.py          # Implements a unified interface pattern
 ├── streamlit_app.py   # Web application frontend and user interaction
 ├── requirements.txt   # Python dependencies (soon)
 └── .env               # Environment configuration (API keys)
