@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from typing import Any, Dict, List, Generator
 from dotenv import load_dotenv
@@ -243,7 +244,6 @@ def get_available_models() -> List[str]:
 
     models = []
     # if ensure_ollama_model("llama3.2", auto_pull=False):
-    models.append("OLLAMA")
     if openai_api_key:
         models.append("OpenAI")
     if anthropic_api_key:
@@ -255,6 +255,20 @@ def get_available_models() -> List[str]:
         MODEL_CONFIG["Gemini"]["class_constructor_params"]["api_key"] = (
             google_api_key
         )
+    # Check if OLLAMA is installed and accessible
+    if shutil.which("ollama") is not None:
+        try:
+            # Optional: also check if OLLAMA service is running
+            import subprocess
+
+            result = subprocess.run(
+                ["ollama", "list"], capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                models.append("OLLAMA")
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            # OLLAMA is installed but not running/accessible
+            pass
     return models
 
 
