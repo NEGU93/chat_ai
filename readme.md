@@ -1,6 +1,14 @@
 # Chat AI
 
 This tool objective is to learn about LLMs and the different options for using it.
+
+In this code you:
+
+1. Use your desired LLM model 
+2. Write your prompt or talk to the microphone and let an AI model translate it to text.
+
+![model_example](static/Screenshot.png)
+
 It wraps all models so that you can use them seemingly, although different in nature.
 The options are:
 
@@ -8,6 +16,9 @@ The options are:
 2. Use OLLAMA (install and run locally)
 3. Hugging Face pipeline (not implemented)
 4. Hugging Face torch model (download python model and run locally)
+
+> [!ATTENTION]
+> The voice reader will only work with OpenAI token
 
 ## Getting started
 
