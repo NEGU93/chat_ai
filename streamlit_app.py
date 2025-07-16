@@ -1,5 +1,5 @@
 import streamlit as st
-from models import get_available_models, get_model
+from models import get_available_models, get_model, audio2text
 
 st.markdown("# CHAT AI")
 
@@ -15,8 +15,8 @@ if (
 ):
     st.session_state.model = get_model(model_name)
     st.session_state.model_name = model_name
+
 # Chat
-# Inject CSS styles for chat bubbles alignment
 chat_placeholder = st.container()
 with chat_placeholder:
     for message in st.session_state.model.messages[1:]:  # Skip system message
@@ -29,12 +29,27 @@ def submit_prompt():
     st.session_state.prompt_widget = ""
 
 
+def process_audio():
+    if st.session_state.audio_input is not None:
+        # Convert audio to text
+        audio_text = audio2text(st.session_state.audio_input)
+        st.session_state.prompt = audio_text
+
+
 st.text_area(
     "Enter your prompt here",
     height=200,
     key="prompt_widget",
     on_change=submit_prompt,
 )
+
+if "OpenAI" in get_available_models():
+    st.audio_input(
+        "Record your message",
+        key="audio_input",
+        on_change=process_audio,
+    )
+
 prompt = st.session_state.prompt
 
 if prompt.strip():
@@ -48,3 +63,6 @@ if prompt.strip():
             with st.spinner("Thinking..."):
                 for chunk in st.session_state.model.chat(prompt=prompt):
                     message_placeholder.markdown(chunk)
+
+    # Clear the prompt after processing
+    st.session_state.prompt = ""
