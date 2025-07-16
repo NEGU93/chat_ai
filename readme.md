@@ -27,6 +27,9 @@
 - **Configuration Management**: Secure environment-based configuration
 - **Scalable Design**: Easy to extend with new AI providers
 
+> [!TIP]
+> Hugging Face is not using the pipeline method, but actually downloading the Torch model, quantizing it (assume you don't normally have a great GPU) and run it in a low level manner, using tokenizer encode/decode.
+
 ## 🚀 Supported AI Providers
 
 | Provider | Type | Default Model |
@@ -147,8 +150,8 @@ The application follows a clean architecture pattern with clear separation of co
 ```
 ├── models.py          # Core AI provider abstractions and unified interface
 ├── streamlit_app.py   # Web application frontend and user interaction
-├── requirements.txt   # Python dependencies
-└── .env              # Environment configuration (API keys)
+├── requirements.txt   # Python dependencies (soon)
+└── .env               # Environment configuration (API keys)
 ```
 
 ---
