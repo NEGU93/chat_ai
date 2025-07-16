@@ -1,5 +1,5 @@
 import streamlit as st
-from models import get_available_models, get_model, audio2text
+from models import get_models_by_provider, get_model, audio2text
 
 st.markdown("# CHAT AI")
 
@@ -7,7 +7,9 @@ if "prompt" not in st.session_state:
     st.session_state.prompt = ""
 
 # Streamlit UI
-model_name = st.sidebar.selectbox("Select Model", get_available_models())
+providers = get_models_by_provider()
+provider_name = st.sidebar.selectbox("Select Provider", providers.keys())
+model_name = st.sidebar.selectbox("Select Model", providers[provider_name])
 
 if (
     "model_name" not in st.session_state
@@ -43,7 +45,7 @@ st.text_area(
     on_change=submit_prompt,
 )
 
-if "OpenAI" in get_available_models():
+if "OpenAI" in providers:
     st.audio_input(
         "Record your message",
         key="audio_input",
