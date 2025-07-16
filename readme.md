@@ -89,8 +89,11 @@ HF_TOKEN=hf_...
 For local AI models without API costs:
 
 1. Install [OLLAMA](https://ollama.com/)
-2. Run the application - models will be downloaded automatically but will take a long time the first run
+2. Run the application
 3. Enjoy unlimited local AI chat
+
+> [!TIP]
+> No need to download the OLLAMA models, my app will download it automatically (just be patient the first time you run)
 
 ## 🎮 Usage
 
