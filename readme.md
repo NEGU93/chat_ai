@@ -64,10 +64,10 @@ Setup whatever keys you want
 - For Google, visit https://ai.google.dev/gemini-api
 - For HuggingFace, visit https://huggingface.co
 
-> [!ATTENTION]
+> [!WARNING]
 > OpenAI key is required for Speech-to-text capabilities
 
-> [!ATTENTION]
+> [!WARNING]
 > For the default HuggingFace model, Meta requires you to sign their terms of service. Visit their model instructions page in Hugging Face: https://huggingface.co/meta-llama/Meta-Llama-3.1-8B. It might take some time to validate.
 
 ### Environment Configuration
