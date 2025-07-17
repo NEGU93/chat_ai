@@ -1,7 +1,6 @@
 # auth_config.py
 import streamlit as st
 import hashlib
-import json
 import os
 from datetime import datetime, timedelta
 import time
@@ -9,27 +8,21 @@ import time
 
 class AuthManager:
     def __init__(self):
-        # In production, use environment variables or secure storage
-        self.users_file = "users.json"
         self.max_login_attempts = 3
         self.lockout_duration = 300  # 5 minutes
+
+        # Initialize users in session state instead of file
+        if "users_db" not in st.session_state:
+            st.session_state.users_db = self.get_default_users()
 
     def hash_password(self, password):
         """Hash password with salt"""
         salt = "streamlit_chat_app_salt"  # In production, use random salt per user
         return hashlib.sha256((password + salt).encode()).hexdigest()
 
-    def load_users(self):
-        """Load users from file or create default"""
-        if os.path.exists(self.users_file):
-            try:
-                with open(self.users_file, "r") as f:
-                    return json.load(f)
-            except:
-                pass
-
-        # Default users
-        default_users = {
+    def get_default_users(self):
+        """Get default users"""
+        return {
             "demo": {
                 "password": self.hash_password("demo123"),
                 "created_at": datetime.now().isoformat(),
@@ -37,13 +30,14 @@ class AuthManager:
                 "locked_until": None,
             }
         }
-        self.save_users(default_users)
-        return default_users
+
+    def load_users(self):
+        """Load users from session state"""
+        return st.session_state.users_db
 
     def save_users(self, users):
-        """Save users to file"""
-        with open(self.users_file, "w") as f:
-            json.dump(users, f, indent=2)
+        """Save users to session state"""
+        st.session_state.users_db = users
 
     def is_user_locked(self, username):
         """Check if user is locked out"""
