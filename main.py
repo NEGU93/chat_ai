@@ -1,12 +1,10 @@
-# main.py - Your new main file that includes authentication
+# main.py - Your new main file for Hugging Face Spaces
 import streamlit as st
-from auth_config import enhanced_auth_app
+from api_key_manager import run_app_with_api_keys
 
 # Configure Streamlit page
-st.set_page_config(
-    page_title="Chat AI with Authentication", page_icon="🤖", layout="wide"
-)
+st.set_page_config(page_title="Chat AI", page_icon="🤖", layout="wide")
 
-# Run the app with authentication
+# Run the app with API key management
 if __name__ == "__main__":
-    enhanced_auth_app()
+    run_app_with_api_keys()
