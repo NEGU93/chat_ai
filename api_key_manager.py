@@ -29,13 +29,19 @@ def api_key_setup():
         """
         Welcome to Chat AI! To get started, please provide your API keys below.
         
-        **Your API keys are:**
+        For setting up each key go to the respective provider's website:
+        - For OpenAI, visit https://openai.com/api/. OpenAI key is required for Speech-to-text capabilities.
+        - For Anthropic, visit https://console.anthropic.com/
+        - For Google, visit https://ai.google.dev/gemini-api
+        """
+    )
+    st.info("""
+        Your API keys are:
         - Stored only in your browser session
         - Not saved to any files or databases
         - Automatically cleared when you close the browser
         - Unique to your session only
-        """
-    )
+        """)
 
     with st.expander("🔧 API Key Configuration", expanded=True):
         st.markdown("### Enter your API keys:")
@@ -168,21 +174,6 @@ def has_api_keys():
     return st.session_state.api_keys_configured
 
 
-def import_main_app():
-    """Import the main app functionality"""
-    try:
-        # Import your existing app.py functions
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location("app", "app.py")
-        app_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(app_module)
-        return app_module
-    except Exception as e:
-        st.error(f"Error importing app.py: {str(e)}")
-        return None
-
-
 def run_main_app():
     """Run the main chat app"""
     # Show API key management in sidebar
@@ -216,9 +207,6 @@ def run_main_app():
         if st.button("🔄 Reset Session"):
             reset_session()
 
-        st.markdown("---")
-        st.markdown(f"**Session ID:** `{st.session_state.session_id[:8]}...`")
-
     # Show API key setup if requested
     if st.session_state.get("show_api_setup"):
         api_key_setup()
@@ -226,102 +214,19 @@ def run_main_app():
             st.session_state.show_api_setup = False
         st.divider()
 
-    # Run the original app code
+    # Import and run your original app.py
     try:
-        # Execute your main app code directly
-        exec("""
-import streamlit as st
-from models import get_models_by_provider, get_model, audio2text
+        # Simply import your app.py file and let it run
+        st.info(
+            "This is a mini version, no local models are available due to Hardware limitations."
+        )
 
-st.markdown("# 🤖 CHAT AI")
-
-if "prompt" not in st.session_state:
-    st.session_state.prompt = ""
-
-# Get available models
-providers = get_models_by_provider()
-if not providers:
-    st.error("❌ No models available. Please check your API keys in the sidebar.")
-    st.stop()
-
-# Model selection
-col1, col2 = st.columns(2)
-with col1:
-    provider_name = st.selectbox("🏢 Select Provider", providers.keys())
-with col2:
-    model_name = st.selectbox("🤖 Select Model", providers[provider_name])
-
-# Only get model if it has changed or is not set
-if (
-    "model_name" not in st.session_state
-    or st.session_state.model_name != model_name
-):
-    with st.spinner("Loading model..."):
-        st.session_state.model = get_model(model_name)
-        st.session_state.model_name = model_name
-
-# Chat interface
-st.markdown("### 💬 Chat")
-chat_placeholder = st.container()
-with chat_placeholder:
-    for message in st.session_state.model.messages[1:]:  # Skip system message
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-def submit_prompt():
-    st.session_state.prompt = st.session_state.prompt_widget
-    st.session_state.prompt_widget = ""
-
-def process_audio():
-    if st.session_state.audio_input is not None:
-        with st.spinner("Converting audio to text..."):
-            audio_text = audio2text(st.session_state.audio_input)
-            st.session_state.prompt = audio_text
-
-# Input area
-st.markdown("### 💭 Your Message")
-st.text_area(
-    "Enter your prompt here",
-    height=100,
-    key="prompt_widget",
-    on_change=submit_prompt,
-    placeholder="Type your message here..."
-)
-
-# Audio input (only if OpenAI is available)
-if "OpenAI" in providers:
-    st.audio_input(
-        "🎤 Record your message",
-        key="audio_input",
-        on_change=process_audio,
-    )
-
-prompt = st.session_state.prompt
-
-if prompt.strip():
-    with chat_placeholder:
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-
-            with st.spinner("🤔 Thinking..."):
-                try:
-                    full_response = ""
-                    for chunk in st.session_state.model.chat(prompt=prompt):
-                        full_response = chunk
-                        message_placeholder.markdown(chunk)
-                except Exception as e:
-                    st.error(f"Error: {str(e)}")
-                    st.error("Please check your API keys and try again.")
-
-    # Clear the prompt after processing
-    st.session_state.prompt = ""
-""")
+        import app
     except Exception as e:
-        st.error(f"❌ Error running main app: {str(e)}")
-        st.markdown("Please check your API keys and try again.")
+        st.error(f"❌ Error importing app.py: {str(e)}")
+        st.markdown(
+            "Please make sure app.py is in the same directory and contains valid code."
+        )
 
 
 def run_app_with_api_keys():
