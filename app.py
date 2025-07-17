@@ -1,72 +1,77 @@
 import streamlit as st
 from models import get_models_by_provider, get_model, audio2text
 
-st.markdown("# CHAT AI")
 
-if "prompt" not in st.session_state:
-    st.session_state.prompt = ""
+def run_app():
+    st.markdown("# CHAT AI")
 
-# Sidebar for model selection
-st.sidebar.header("Model Selection")
-providers = get_models_by_provider()
-provider_name = st.sidebar.selectbox("Select Provider", providers.keys())
-model_name = st.sidebar.selectbox("Select Model", providers[provider_name])
+    if "prompt" not in st.session_state:
+        st.session_state.prompt = ""
 
-# Only get model if it has changed or is not set
-if (
-    "model_name" not in st.session_state
-    or st.session_state.model_name != model_name
-):
-    st.session_state.model = get_model(model_name)
-    st.session_state.model_name = model_name
+    # Sidebar for model selection
+    st.sidebar.header("Model Selection")
+    providers = get_models_by_provider()
+    provider_name = st.sidebar.selectbox("Select Provider", providers.keys())
+    model_name = st.sidebar.selectbox("Select Model", providers[provider_name])
 
-# Chat
-chat_placeholder = st.container()
-with chat_placeholder:
-    for message in st.session_state.model.messages[1:]:  # Skip system message
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    # Only get model if it has changed or is not set
+    if (
+        "model_name" not in st.session_state
+        or st.session_state.model_name != model_name
+    ):
+        st.session_state.model = get_model(model_name)
+        st.session_state.model_name = model_name
 
+    # Chat
+    chat_placeholder = st.container()
+    with chat_placeholder:
+        for message in st.session_state.model.messages[
+            1:
+        ]:  # Skip system message
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
-def submit_prompt():
-    st.session_state.prompt = st.session_state.prompt_widget
-    st.session_state.prompt_widget = ""
+    def submit_prompt():
+        st.session_state.prompt = st.session_state.prompt_widget
+        st.session_state.prompt_widget = ""
 
+    def process_audio():
+        if st.session_state.audio_input is not None:
+            # Convert audio to text
+            audio_text = audio2text(st.session_state.audio_input)
+            st.session_state.prompt = audio_text
 
-def process_audio():
-    if st.session_state.audio_input is not None:
-        # Convert audio to text
-        audio_text = audio2text(st.session_state.audio_input)
-        st.session_state.prompt = audio_text
-
-
-st.text_area(
-    "Enter your prompt here",
-    height=200,
-    key="prompt_widget",
-    on_change=submit_prompt,
-)
-
-if "OpenAI" in providers:
-    st.audio_input(
-        "Record your message",
-        key="audio_input",
-        on_change=process_audio,
+    st.text_area(
+        "Enter your prompt here",
+        height=200,
+        key="prompt_widget",
+        on_change=submit_prompt,
     )
 
-prompt = st.session_state.prompt
+    if "OpenAI" in providers:
+        st.audio_input(
+            "Record your message",
+            key="audio_input",
+            on_change=process_audio,
+        )
 
-if prompt.strip():
-    with chat_placeholder:
-        with st.chat_message("user"):
-            st.markdown(prompt)
+    prompt = st.session_state.prompt
 
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
+    if prompt.strip():
+        with chat_placeholder:
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-            with st.spinner("Thinking..."):
-                for chunk in st.session_state.model.chat(prompt=prompt):
-                    message_placeholder.markdown(chunk)
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
 
-    # Clear the prompt after processing
-    st.session_state.prompt = ""
+                with st.spinner("Thinking..."):
+                    for chunk in st.session_state.model.chat(prompt=prompt):
+                        message_placeholder.markdown(chunk)
+
+        # Clear the prompt after processing
+        st.session_state.prompt = ""
+
+
+if __name__ == "__main__":
+    run_app()

@@ -2,6 +2,7 @@
 import streamlit as st
 import os
 import uuid
+from app import run_app
 
 
 def initialize_session():
@@ -28,7 +29,7 @@ def api_key_setup():
     st.markdown(
         """
         Welcome to Chat AI! To get started, please provide your API keys below.
-        
+
         For setting up each key go to the respective provider's website:
         - For OpenAI, visit https://openai.com/api/. OpenAI key is required for Speech-to-text capabilities.
         - For Anthropic, visit https://console.anthropic.com/
@@ -221,7 +222,7 @@ def run_main_app():
             "This is a mini version, no local models are available due to Hardware limitations."
         )
 
-        import app
+        run_app()
     except Exception as e:
         st.error(f"❌ Error importing app.py: {str(e)}")
         st.markdown(
