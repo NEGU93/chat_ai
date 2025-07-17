@@ -6,11 +6,13 @@ st.markdown("# CHAT AI")
 if "prompt" not in st.session_state:
     st.session_state.prompt = ""
 
-# Streamlit UI
+# Sidebar for model selection
+st.sidebar.header("Model Selection")
 providers = get_models_by_provider()
 provider_name = st.sidebar.selectbox("Select Provider", providers.keys())
 model_name = st.sidebar.selectbox("Select Model", providers[provider_name])
 
+# Only get model if it has changed or is not set
 if (
     "model_name" not in st.session_state
     or st.session_state.model_name != model_name
