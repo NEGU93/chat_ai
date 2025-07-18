@@ -44,7 +44,7 @@ def render_api_key_inputs():
     st.markdown("### Enter your API keys:")
 
     openai_key = st.text_input(
-        "OpenAI API Key (Optional)",
+        "OpenAI API Key",
         type="password",
         value=st.session_state.openai_key,
         help="Required for Speech-to-text functionality",
@@ -52,7 +52,7 @@ def render_api_key_inputs():
     )
 
     anthropic_key = st.text_input(
-        "Anthropic API Key (Optional)",
+        "Anthropic API Key",
         type="password",
         value=st.session_state.anthropic_key,
         help="For Claude models",
@@ -60,7 +60,7 @@ def render_api_key_inputs():
     )
 
     gemini_key = st.text_input(
-        "Gemini API Key (Optional)",
+        "Gemini API Key",
         type="password",
         value=st.session_state.gemini_key,
         help="For Google Gemini models",
@@ -96,9 +96,9 @@ def save_api_keys(openai_key, anthropic_key, gemini_key):
         del os.environ["ANTHROPIC_API_KEY"]
 
     if st.session_state.gemini_key:
-        os.environ["GEMINI_API_KEY"] = st.session_state.gemini_key
-    elif "GEMINI_API_KEY" in os.environ:
-        del os.environ["GEMINI_API_KEY"]
+        os.environ["GOOGLE_API_KEY"] = st.session_state.gemini_key
+    elif "GOOGLE_API_KEY" in os.environ:
+        del os.environ["GOOGLE_API_KEY"]
 
     st.success("✅ API keys saved successfully!")
     st.rerun()
@@ -131,9 +131,7 @@ def display_api_key_status():
     if not active_keys:
         st.error("❌ No API keys configured")
         return False
-    else:
-        st.info(f"Active: {', '.join(active_keys)}")
-        return True
+    return True
 
 
 def api_key_setup():
@@ -143,18 +141,11 @@ def api_key_setup():
     with st.sidebar.expander("🔧 API Key Configuration", expanded=True):
         openai_key, anthropic_key, gemini_key = render_api_key_inputs()
 
-        col1, col2 = st.columns(2)
-
-        with col1:
-            if st.button("💾 Save Keys", type="primary"):
-                if validate_api_keys(openai_key, anthropic_key, gemini_key):
-                    save_api_keys(openai_key, anthropic_key, gemini_key)
-                else:
-                    st.error("❌ Please provide at least one API key")
-
-        with col2:
-            if st.button("🗑️ Clear All"):
-                save_api_keys("", "", "")
+        if st.button("💾 Save Keys", type="primary"):
+            if validate_api_keys(openai_key, anthropic_key, gemini_key):
+                save_api_keys(openai_key, anthropic_key, gemini_key)
+            else:
+                st.error("❌ Please provide at least one API key")
 
 
 def run_main_app():

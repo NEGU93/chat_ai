@@ -3,5 +3,6 @@ openai
 torch
 transformers
 accelerate
+anthropic
 bitsandbytes
 python-dotenv
