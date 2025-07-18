@@ -3,7 +3,7 @@ from models import get_models_by_provider, get_model, audio2text
 
 
 def run_app():
-    st.markdown("# CHAT AI")
+    st.markdown("# 🤖 Chat AI - Universal LLM Interface")
 
     if "prompt" not in st.session_state:
         st.session_state.prompt = ""
