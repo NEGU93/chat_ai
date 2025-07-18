@@ -123,6 +123,6 @@ The application follows a clean architecture pattern with clear separation of co
 
 ---
 
-**Built with ❤️ by NEGU93** | [GitHub](https://github.com/NEGU93) | [Connect on LinkedIn](https://linkedin.com/in/your-profile)
+**Built with ❤️ by NEGU93** | [GitHub](https://github.com/NEGU93) | [Connect on LinkedIn](https://www.linkedin.com/in/jose-agustin-barrachina/)
 
 *Showcasing modern AI application development with production-ready architecture*
