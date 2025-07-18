@@ -76,7 +76,7 @@ Create a `.env` file in the root directory:
 # Cloud API Keys (use only what you need)
 OPENAI_API_KEY=sk-proj-...
 ANTHROPIC_API_KEY=sk-ant-...
-GEMINI_API_KEY=...
+GOOGLE_API_KEY=...
 HF_TOKEN=hf_...
 ```
 
@@ -95,7 +95,7 @@ For local AI models without API costs:
 
 ```bash
 # Start the application
-streamlit run streamlit_app.py
+streamlit run app.py
 ```
 
 Navigate to `http://localhost:8501` and start chatting with your preferred AI model!
@@ -124,5 +124,3 @@ The application follows a clean architecture pattern with clear separation of co
 ---
 
 **Built with ❤️ by NEGU93** | [GitHub](https://github.com/NEGU93) | [Connect on LinkedIn](https://www.linkedin.com/in/jose-agustin-barrachina/)
-
-*Showcasing modern AI application development with production-ready architecture*
