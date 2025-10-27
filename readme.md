@@ -2,11 +2,10 @@
 
 > A production-ready, multi-provider AI chat application with voice integration and unified API abstraction
 
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
-![Streamlit](https://img.shields.io/badge/streamlit-1.28+-red.svg)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-orange.svg)
-![Transformers](https://img.shields.io/badge/🤗_Transformers-4.30+-yellow.svg)
 [![Hugging Face Spaces](https://img.shields.io/badge/HuggingFace-Spaces-blue?logo=huggingface)](https://huggingface.co/spaces/NEGU93/chat_ai)
+![Streamlit](https://img.shields.io/badge/streamlit-1.28+-red.svg)
+![Transformers](https://img.shields.io/badge/🤗_Transformers-4.30+-yellow.svg)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-orange.svg)
 
 👉 [Try the Chat AI Space](https://huggingface.co/spaces/NEGU93/chat_ai) 🤗
 
